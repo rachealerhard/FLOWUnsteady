@@ -34,7 +34,7 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
                         heightdist::Array{Float64,2},
                         airfoil_files::Array{Tuple{Float64,String,String},1};
                         # INPUT OPTIONS
-                        save_path="/home/users/rerhard/"
+                        save_path="/home/users/rerhard/",
                         data_path=def_data_path,
                         read_polar=vlm.ap.read_polar,
                         # PROCESSING OPTIONS
