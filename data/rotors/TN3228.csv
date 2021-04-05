@@ -1,0 +1,5 @@
+﻿property,file,description
+Rtip,0.812292, (m) Radius of blade tip
+Rhub,0.0812292, (m) Radius of hub
+B,4, Number of blades
+blade,TN3228_blade.csv, Blade file

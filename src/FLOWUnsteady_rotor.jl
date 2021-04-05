@@ -34,6 +34,7 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
                         heightdist::Array{Float64,2},
                         airfoil_files::Array{Tuple{Float64,String,String},1};
                         # INPUT OPTIONS
+                        save_path="/home/users/rerhard/"
                         data_path=def_data_path,
                         read_polar=vlm.ap.read_polar,
                         # PROCESSING OPTIONS
@@ -172,6 +173,12 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
         ax.legend(loc="best", frameon=true)
         ax.grid(true, color="0.8", linestyle="--")
 
+        # Save figure
+        if save_figs
+            savefig(joinpath(save_path, "FLOWUnsteady_rotordiscretization_verification.png"),
+                                                        transparent=true)
+        end
+
         fig = vlm.ap.figure("polars", figsize=[7*3, 5*1]*2/3)
         axs = fig.subplots(1, 3)
         for (i,(pos, polar)) in enumerate(airfoils)
@@ -179,6 +186,11 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
                                         (Mas!=nothing ? ", Ma=$(round(Mas[i], digits=2))" : ""),
                     cdpolar=false, fig_id="prelim_curves", title_str="Re sweep",
                     rfl_figfactor=figsize_factor, fig=fig, axs=axs)
+        end
+        # Save figure
+        if save_figs
+            savefig(joinpath(save_path, "FLOWUnsteady_rotor_polars.png"),
+                                                        transparent=true)
         end
     end
 
