@@ -32,7 +32,7 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
                         pitchdist::Array{Float64,2},
                         sweepdist::Array{Float64,2},
                         heightdist::Array{Float64,2},
-                        airfoil_files::Array{Tuple{Float64,String,String},1};
+                        airfoil_contours::Array{Tuple{Float64,Array{Float64, 2},String},1};
                         # INPUT OPTIONS
                         save_path="/home/users/rerhard/",
                         save_figs=true,
@@ -44,30 +44,17 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
                         ReD=5*10^5, altReD=nothing, Matip=0.0,
                         ncrit=9,
                         xfoil=false,
-                        rotor_file="apc10x7.jl",
                         spline_k=5, spline_s=0.001, splines_s=nothing, spline_bc="extrapolate",
                         turbine_flag=false,
                         rfl_n_lower=15, rfl_n_upper=15,
                         rediscretize_airfoils=true,
                         # OUTPUT OPTIONS
                         verbose=false, verbose_xfoil=false, v_lvl=1,
+                        save_polars=nothing, save_polar_pref="airfoilpolar",
                         plot_disc=true, figsize_factor=2/3)
     if verbose; println("\t"^v_lvl*"Generating geometry..."); end;
     n_bem = n
 
-    # Read airfoil contours
-    # Airfoils along the blade as
-    # airfoil_contours=[ (pos1, contour1, polar1), (pos2, contour2, pol2), ...]
-    # with contour=(x,y) and pos the position from root to tip between 0 and 1.
-    # pos1 must equal 0 (root airfoil) and the last must be 1 (tip airfoil)
-    airfoil_contours = []
-    airfoil_path = joinpath(data_path, "airfoils")
-    for (r, rfl_file, clcurve_file) in airfoil_files
-        x,y = gt.readcontour(rfl_file; delim=",", path=airfoil_path, header_len=1)
-        rfl = hcat(x,y)
-
-        push!(airfoil_contours, (r, rfl, clcurve_file))
-    end
 
     # Splines
     _spl_chord = Dierckx.Spline1D(chorddist[:, 1]*Rtip, chorddist[:, 2]*Rtip;
@@ -131,6 +118,11 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
                                     verbose=verbose_xfoil, Mach=this_Ma,
                                     iter=100, ncrit=ncrit)
             if verbose; println(" done."); end;
+
+            if save_polars != nothing
+                if !(isdir(save_polars)); mkdir(save_polars); end;
+                vlm.ap.save_polar2(polar, save_polar_pref*"-sec$(rfli)-Re$(ceil(Int, this_Re))"; path=save_polars)
+            end
 
         else # Reads polars from files
             if verbose; println("\t"^(v_lvl+1)*"$file_name"); end;
@@ -196,6 +188,34 @@ function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
     end
 
     return propeller
+end
+
+function generate_rotor(Rtip::Real, Rhub::Real, B::Int,
+                        chorddist::Array{Float64,2},
+                        pitchdist::Array{Float64,2},
+                        sweepdist::Array{Float64,2},
+                        heightdist::Array{Float64,2},
+                        airfoil_files::Array{Tuple{Float64,String,String},1};
+                        # INPUT OPTIONS
+                        data_path=def_data_path, optargs...)
+
+    # Read airfoil contours
+    # Airfoils along the blade as
+    # airfoil_contours=[ (pos1, contour1, polar1), (pos2, contour2, pol2), ...]
+    # with contour=(x,y) and pos the position from root to tip between 0 and 1.
+    # pos1 must equal 0 (root airfoil) and the last must be 1 (tip airfoil)
+    airfoil_contours = Tuple{Float64,Array{Float64, 2},String}[]
+    airfoil_path = joinpath(data_path, "airfoils")
+    for (r, rfl_file, clcurve_file) in airfoil_files
+        x,y = gt.readcontour(rfl_file; delim=",", path=airfoil_path, header_len=1)
+        rfl = hcat(x,y)
+
+        push!(airfoil_contours, (r, rfl, clcurve_file))
+    end
+
+    return generate_rotor(Rtip, Rhub, B,
+                            chorddist, pitchdist, sweepdist, heightdist,
+                            airfoil_contours; data_path=data_path, optargs...)
 end
 
 function generate_rotor(Rtip::Real, Rhub::Real, B::Int, blade_file::String;
