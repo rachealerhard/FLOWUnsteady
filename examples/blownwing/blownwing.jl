@@ -22,6 +22,7 @@ import GeometricTools
 gt = GeometricTools
 
 using PyPlot
+import DataFrames
 
 noise = nothing
 try
